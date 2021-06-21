@@ -14,7 +14,7 @@
             @click="scrollDown"
             :ref="
                 (el) => {
-                    imgsRefs[index] = el;
+                    if (el) imgsRefs[index] = el;
                 }
             "
             :data-index="index"
@@ -24,9 +24,10 @@
 
 <script lang="ts">
 import ReloadPrompt from "./components/ReloadPrompt.vue";
+import { getLocalStorage, saveLocalStorage } from "./useLocalStorage";
 
 import { ZipReader, BlobReader, Entry, BlobWriter } from "@zip.js/zip.js";
-import { computed, defineComponent, onBeforeUpdate, ref, watch } from "vue";
+import { computed, defineComponent, onBeforeUpdate, ref, watch, watchEffect } from "vue";
 
 export default defineComponent({
     name: "App",
@@ -35,10 +36,11 @@ export default defineComponent({
     },
     setup() {
         const manga = ref<[string, Entry[]][]>([]);
-        const chapterIndex = ref(1);
+        const chapterIndex = ref(0);
         const imgs = ref<string[]>([]);
         const imgsRefs = ref<any[]>([]);
         const fileName = ref("");
+        const loadedCheckpoint = ref(false);
 
         const createUrl = async (entry: Entry) => {
             return URL.createObjectURL(await entry.getData!(new BlobWriter()));
@@ -68,9 +70,9 @@ export default defineComponent({
 
             chapters
                 .sort((a, b) => {
-                    const aNumber = parseInt(a[0].match(/\d+/g)!.slice(0, 1).join("."));
+                    const aNumber = parseFloat(a[0].match(/\d+/g)!.slice(0, 1).join("."));
 
-                    const bNumber = parseInt(b[0].match(/\d+/g)!.slice(0, 1).join("."));
+                    const bNumber = parseFloat(b[0].match(/\d+/g)!.slice(0, 1).join("."));
 
                     return aNumber - bNumber;
                 })
@@ -83,9 +85,10 @@ export default defineComponent({
                     });
                 });
 
-            manga.value = chapters;
             fileName.value = file.name;
-            chapterIndex.value = 0;
+            manga.value = chapters;
+
+            imgs.value = (await getImgs(chapterIndex.value))!;
         };
 
         const getImgs = (index: number) => {
@@ -97,18 +100,58 @@ export default defineComponent({
         };
 
         const scrollDown = (event: any) => {
-            window.scrollTo(0, window.innerHeight + window.pageYOffset - 400);
+            window.scrollTo({
+                left: 0,
+                top: window.innerHeight + window.pageYOffset - 400,
+                behavior: "smooth",
+            });
         };
 
         const chapters = computed(() => manga.value.map(([title]) => title));
 
         watch(chapterIndex, async (newVal, oldVal) => {
+            saveLocalStorage(fileName.value, newVal.toString());
+            saveLocalStorage(fileName.value + "Img", "0");
             imgs.value = (await getImgs(newVal))!;
         });
 
-        onBeforeUpdate(() => {
-            imgsRefs.value = [];
+        watch(fileName, () => {
+            chapterIndex.value = 0;
+            loadedCheckpoint.value = false;
         });
+
+        // TODO: Add in the future a way to save the current img
+        // const observer = new IntersectionObserver(
+        //     (entries, observer) => {
+        //         saveLocalStorage(
+        //             fileName.value + "Img",
+        //             entries[0].target.attributes.getNamedItem("data-index")!.value,
+        //         );
+        //     },
+        //     { threshold: [0.3] },
+        // );
+
+        watchEffect(
+            () => {
+                if (imgsRefs.value.length <= 0) return;
+                // imgsRefs.value.map((el) => observer.observe(el));
+
+                if (!loadedCheckpoint.value) {
+                    const lastChapter = getLocalStorage(fileName.value);
+
+                    if (!lastChapter) {
+                        chapterIndex.value = 0;
+                    } else if (chapterIndex.value !== parseInt(lastChapter)) {
+                        chapterIndex.value = parseInt(lastChapter);
+                    }
+
+                    loadedCheckpoint.value = true;
+                }
+            },
+            {
+                flush: "post",
+            },
+        );
 
         return {
             manga,
@@ -116,6 +159,7 @@ export default defineComponent({
             imgs,
             imgsRefs,
             chapters,
+            loadedCheckpoint,
 
             fileName,
 
@@ -141,6 +185,10 @@ body {
     text-align: center;
     color: #2c3e50;
     margin-top: 60px;
+}
+
+input[type="file"] {
+    max-width: 100vw;
 }
 
 .imgs {
