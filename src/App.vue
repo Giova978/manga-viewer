@@ -1,22 +1,44 @@
 <template>
+    <reload-prompt />
     <input type="text" v-model="chapterIndex" />
     <input type="file" accept=".zip" @change="decompress" />
-    <div>
-        <img v-for="(blob, index) in imgs" :key="index" :src="blob" alt="" />
+    <select name="chapter" id="chapter" v-model="chapterIndex">
+        <option v-for="(chapter, index) in chapters" :value="index" :key="index">{{ chapter }}</option>
+    </select>
+    <div class="imgs">
+        <img
+            v-for="(blob, index) in imgs"
+            :key="index"
+            :src="blob"
+            alt=""
+            @click="scrollDown"
+            :ref="
+                (el) => {
+                    imgsRefs[index] = el;
+                }
+            "
+            :data-index="index"
+        />
     </div>
 </template>
 
 <script lang="ts">
-import { ZipReader, BlobReader, Entry, BlobWriter } from "@zip.js/zip.js";
+import ReloadPrompt from "./components/ReloadPrompt.vue";
 
-import { defineComponent, ref, watch } from "vue";
+import { ZipReader, BlobReader, Entry, BlobWriter } from "@zip.js/zip.js";
+import { computed, defineComponent, onBeforeUpdate, ref, watch } from "vue";
 
 export default defineComponent({
     name: "App",
+    components: {
+        ReloadPrompt,
+    },
     setup() {
         const manga = ref<[string, Entry[]][]>([]);
-        const chapterIndex = ref(0);
+        const chapterIndex = ref(1);
         const imgs = ref<string[]>([]);
+        const imgsRefs = ref<any[]>([]);
+        const fileName = ref("");
 
         const createUrl = async (entry: Entry) => {
             return URL.createObjectURL(await entry.getData!(new BlobWriter()));
@@ -62,34 +84,56 @@ export default defineComponent({
                 });
 
             manga.value = chapters;
-            chapterIndex.value = 1;
+            fileName.value = file.name;
+            chapterIndex.value = 0;
         };
 
         const getImgs = (index: number) => {
             if (!manga.value?.length) return;
 
-            const arr = manga.value[index - 1]![1].map((entry: Entry) => createUrl(entry).catch());
+            const arr = manga.value[index]![1].map((entry: Entry) => createUrl(entry).catch());
 
             return Promise.all(arr);
         };
 
+        const scrollDown = (event: any) => {
+            window.scrollTo(0, window.innerHeight + window.pageYOffset - 400);
+        };
+
+        const chapters = computed(() => manga.value.map(([title]) => title));
+
         watch(chapterIndex, async (newVal, oldVal) => {
             imgs.value = (await getImgs(newVal))!;
+        });
+
+        onBeforeUpdate(() => {
+            imgsRefs.value = [];
         });
 
         return {
             manga,
             chapterIndex,
             imgs,
+            imgsRefs,
+            chapters,
+
+            fileName,
 
             decompress,
             createUrl,
+            scrollDown,
         };
     },
 });
 </script>
 
 <style lang="scss">
+body {
+    margin: 0;
+    padding: 0;
+    box-sizing: content-box;
+}
+
 #app {
     font-family: Avenir, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -97,5 +141,13 @@ export default defineComponent({
     text-align: center;
     color: #2c3e50;
     margin-top: 60px;
+}
+
+.imgs {
+    max-width: 100vw;
+
+    img {
+        max-width: 100%;
+    }
 }
 </style>
