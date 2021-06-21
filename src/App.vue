@@ -188,7 +188,7 @@ body {
 }
 
 input[type="file"] {
-    max-width: 100vw;
+    max-width: 100%;
 }
 
 .imgs {
