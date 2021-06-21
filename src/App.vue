@@ -187,7 +187,7 @@ body {
     margin-top: 60px;
 }
 
-input[type="file"] {
+select {
     max-width: 100%;
 }
 
