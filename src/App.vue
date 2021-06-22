@@ -1,24 +1,44 @@
 <template>
     <reload-prompt />
-    <input type="text" v-model="chapterIndex" />
-    <input type="file" accept=".zip" @change="decompress" />
-    <select name="chapter" id="chapter" v-model="chapterIndex">
-        <option v-for="(chapter, index) in chapters" :value="index" :key="index">{{ chapter }}</option>
-    </select>
-    <div class="imgs">
-        <img
-            v-for="(blob, index) in imgs"
-            :key="index"
-            :src="blob"
-            alt=""
-            @click="scrollDown"
-            :ref="
-                (el) => {
-                    if (el) imgsRefs[index] = el;
-                }
-            "
-            :data-index="index"
-        />
+    <div class="pages">
+        <p>{{ parseInt(currentImg) + 1 }}/{{ imgs.length }}</p>
+    </div>
+    <div class="container">
+        <header>
+            <section class="inputs">
+                <input type="file" accept=".zip" @change="decompress" />
+                <select name="chapter" id="chapter" v-model="chapterIndex">
+                    <option v-for="(chapter, index) in chapters" :value="index" :key="index">{{ chapter }}</option>
+                </select>
+            </section>
+
+            <section class="controls">
+                <button><span class="fas fa-arrow-left"></span></button>
+                <button><span class="fas fa-arrow-right"></span></button>
+            </section>
+        </header>
+
+        <main>
+            <img
+                v-for="(blob, index) in imgs"
+                :key="index"
+                :src="blob"
+                alt=""
+                @click="scrollDown"
+                :ref="
+                    (el) => {
+                        if (el) imgsRefs[index] = el;
+                    }
+                "
+                :data-index="index"
+            />
+        </main>
+        <footer>
+            <section class="controls">
+                <button><span class="fas fa-arrow-left"></span></button>
+                <button><span class="fas fa-arrow-right"></span></button>
+            </section>
+        </footer>
     </div>
 </template>
 
@@ -42,6 +62,7 @@ export default defineComponent({
         const imgsRefs = ref<any[]>([]);
         const fileName = ref("");
         const loadedCheckpoint = ref(false);
+        const currentImg = ref("0");
 
         const createUrl = async (entry: Entry) => {
             return URL.createObjectURL(await entry.getData!(new BlobWriter()));
@@ -71,7 +92,7 @@ export default defineComponent({
         const scrollDown = (event: any) => {
             window.scrollTo({
                 left: 0,
-                top: window.innerHeight + window.pageYOffset - 400,
+                top: window.innerHeight + window.pageYOffset - window.innerHeight * 0.4,
                 behavior: "smooth",
             });
         };
@@ -92,12 +113,13 @@ export default defineComponent({
         const observer = new IntersectionObserver(
             (entries, observer) => {
                 if (!loadedCheckpoint.value) return;
+                currentImg.value = entries[0].target.attributes.getNamedItem("data-index")!.value;
                 saveLocalStorage(
                     fileName.value + "Img",
                     entries[0].target.attributes.getNamedItem("data-index")!.value,
                 );
             },
-            { threshold: [0.3] },
+            { threshold: [0.4] },
         );
 
         watchEffect(
@@ -117,6 +139,7 @@ export default defineComponent({
 
                     const timeout = setTimeout(() => {
                         window.scrollTo(0, imgsRefs.value[parseInt(lastImg!)].offsetTop);
+                        currentImg.value = lastImg!;
                         loadedCheckpoint.value = true;
                         clearTimeout(timeout);
                     }, 50);
@@ -134,6 +157,7 @@ export default defineComponent({
             imgsRefs,
             chapters,
             loadedCheckpoint,
+            currentImg,
 
             fileName,
 
@@ -146,10 +170,13 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
+* {
+    box-sizing: border-box;
+}
+
 body {
     margin: 0;
     padding: 0;
-    box-sizing: content-box;
 }
 
 #app {
@@ -158,18 +185,70 @@ body {
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
     color: #2c3e50;
-    margin-top: 60px;
+}
+
+.container {
+    display: grid;
+    justify-content: center;
+}
+
+main {
+    display: grid;
+    max-width: 1000px;
+
+    max-width: 100vw;
+
+    img {
+        border-top: 2px dotted #ccc;
+        max-width: 100%;
+    }
+}
+
+.controls {
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+
+    button {
+        width: 44px;
+        height: 44px;
+        font-size: 30px;
+
+        &:last-of-type {
+            grid-column: 3;
+        }
+    }
+}
+
+.pages {
+    position: sticky;
+    top: 0;
+    left: 0;
+
+    p {
+        position: absolute;
+        margin: 0;
+        width: 40px;
+        height: 30px;
+        padding: 5px 5px 10px 5px;
+        background: #d0d0d7;
+        border: 2px solid #757579;
+        border-width: 0px 2px 2px 0px;
+        border-radius: 0px 0px 5px 0px;
+    }
 }
 
 select {
     max-width: 100%;
+    height: 44px;
 }
 
-.imgs {
-    max-width: 100vw;
-
-    img {
-        max-width: 100%;
+header {
+    .inputs {
+        select {
+            display: block;
+            width: 100%;
+            justify-self: center;
+        }
     }
 }
 </style>
