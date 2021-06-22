@@ -13,8 +13,12 @@
             </section>
 
             <section class="controls">
-                <button @click="previousChapter"><span class="fas fa-arrow-left"></span></button>
-                <button @click="nextChapter"><span class="fas fa-arrow-right"></span></button>
+                <button @click="previousChapter" :class="{ disabled: chapterIndex == 0 }">
+                    <span class="fas fa-arrow-left"></span>
+                </button>
+                <button @click="nextChapter" :class="{ disabled: chapterIndex == manga.length }">
+                    <span class="fas fa-arrow-right"></span>
+                </button>
             </section>
         </header>
 
@@ -35,8 +39,12 @@
         </main>
         <footer>
             <section class="controls">
-                <button @click="previousChapter"><span class="fas fa-arrow-left"></span></button>
-                <button @click="nextChapter"><span class="fas fa-arrow-right"></span></button>
+                <button @click="previousChapter" :class="{ disabled: chapterIndex == 0 }">
+                    <span class="fas fa-arrow-left"></span>
+                </button>
+                <button @click="nextChapter" :class="{ disabled: chapterIndex == manga.length }">
+                    <span class="fas fa-arrow-right"></span>
+                </button>
             </section>
         </footer>
     </div>
@@ -119,7 +127,7 @@ export default defineComponent({
                     entries[0].target.attributes.getNamedItem("data-index")!.value,
                 );
             },
-            { threshold: [0.4] },
+            { threshold: [0.6] },
         );
 
         watchEffect(
@@ -208,11 +216,10 @@ main {
     display: grid;
     max-width: 1000px;
 
-    max-width: 100vw;
-
     img {
         border-top: 2px dotted #ccc;
         max-width: 100%;
+        object-fit: contain;
     }
 }
 
@@ -229,6 +236,11 @@ main {
             grid-column: 3;
         }
     }
+
+    .disabled {
+        pointer-events: none;
+        opacity: 0.5;
+    }
 }
 
 .pages {
@@ -239,7 +251,7 @@ main {
     p {
         position: absolute;
         margin: 0;
-        width: 40px;
+        width: 60px;
         height: 30px;
         padding: 5px 5px 10px 5px;
         background: #d0d0d7;
