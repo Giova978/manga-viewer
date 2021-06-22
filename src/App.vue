@@ -11,7 +11,7 @@
                     <option v-for="(chapter, index) in chapters" :value="index" :key="index">{{ chapter }}</option>
                 </select>
             </section>
-
+            
             <section class="controls">
                 <button @click="previousChapter" :class="{ disabled: chapterIndex == 0 }">
                     <span class="fas fa-arrow-left"></span>
@@ -21,27 +21,28 @@
                 </button>
             </section>
         </header>
-
+        
         <main>
             <img
-                v-for="(blob, index) in imgs"
-                :key="index"
-                :src="blob"
-                alt=""
-                @click="scrollDown"
-                :ref="
+            v-for="(blob, index) in imgs"
+            :key="index"
+            :src="blob"
+            alt=""
+            @click="scrollDown"
+            :ref="
                     (el) => {
                         if (el) imgsRefs[index] = el;
                     }
-                "
+                    "
                 :data-index="index"
-            />
+                />
         </main>
         <footer>
             <section class="controls">
                 <button @click="previousChapter" :class="{ disabled: chapterIndex == 0 }">
                     <span class="fas fa-arrow-left"></span>
                 </button>
+                <button class="up" @click="scrollTop"><span class="fas fa-arrow-up"></span></button>
                 <button @click="nextChapter" :class="{ disabled: chapterIndex == manga.length }">
                     <span class="fas fa-arrow-right"></span>
                 </button>
@@ -168,6 +169,13 @@ export default defineComponent({
             chapterIndex.value--;
         };
 
+        const scrollTop = () => {
+            window.scrollTo({ 
+                left: 0,
+                
+            })
+        }
+
         return {
             manga,
             chapterIndex,
@@ -184,6 +192,7 @@ export default defineComponent({
             scrollDown,
             nextChapter,
             previousChapter,
+            scrollTop,
         };
     },
 });
@@ -241,6 +250,10 @@ main {
         pointer-events: none;
         opacity: 0.5;
     }
+
+    .up {
+        justify-self: center;
+    }
 }
 
 .pages {
@@ -274,5 +287,14 @@ header {
             justify-self: center;
         }
     }
+}
+
+@media screen and (max-width: 500px) {
+    .top {
+        button {
+            margin-right: 0;
+        }
+    }
+    
 }
 </style>
