@@ -27,7 +27,8 @@ import ReloadPrompt from "./components/ReloadPrompt.vue";
 import { getLocalStorage, saveLocalStorage } from "./useLocalStorage";
 
 import { ZipReader, BlobReader, Entry, BlobWriter } from "@zip.js/zip.js";
-import { computed, defineComponent, onBeforeUpdate, ref, watch, watchEffect } from "vue";
+import { computed, defineComponent, ref, watch, watchEffect } from "vue";
+import { decompressAndSort } from "./useDecompress";
 
 export default defineComponent({
     name: "App",
@@ -50,40 +51,8 @@ export default defineComponent({
             const file = event.target.files[0];
             if (!file) return;
 
-            const reader = new ZipReader(new BlobReader(file));
-
-            const entries = await reader.getEntries().catch(console.error);
-
-            if (!entries) return;
-
-            const chapters = Object.entries(
-                entries.reduce((acc: { [key: string]: Entry[] }, el) => {
-                    const chapter = el.filename.split("/")[2];
-
-                    if (!acc[chapter]) acc[chapter] = [];
-
-                    acc[chapter].push(el);
-
-                    return acc;
-                }, {}),
-            );
-
-            chapters
-                .sort((a, b) => {
-                    const aNumber = parseFloat(a[0].match(/\d+/g)!.slice(0, 1).join("."));
-
-                    const bNumber = parseFloat(b[0].match(/\d+/g)!.slice(0, 1).join("."));
-
-                    return aNumber - bNumber;
-                })
-                .map(([, entries]) => {
-                    entries.sort((a, b) => {
-                        const aNumber = parseInt(a.filename.split("/")[3].match(/\d+/g)![0]);
-                        const bNumber = parseInt(b.filename.split("/")[3].match(/\d+/g)![0]);
-
-                        return aNumber - bNumber;
-                    });
-                });
+            const chapters = await decompressAndSort(file);
+            if (!chapters) return;
 
             fileName.value = file.name;
             manga.value = chapters;
@@ -94,7 +63,7 @@ export default defineComponent({
         const getImgs = (index: number) => {
             if (!manga.value?.length) return;
 
-            const arr = manga.value[index]![1].map((entry: Entry) => createUrl(entry).catch());
+            const arr = manga.value[index][1].map((entry: Entry) => createUrl(entry).catch());
 
             return Promise.all(arr);
         };
@@ -120,32 +89,36 @@ export default defineComponent({
             loadedCheckpoint.value = false;
         });
 
-        // TODO: Add in the future a way to save the current img
-        // const observer = new IntersectionObserver(
-        //     (entries, observer) => {
-        //         saveLocalStorage(
-        //             fileName.value + "Img",
-        //             entries[0].target.attributes.getNamedItem("data-index")!.value,
-        //         );
-        //     },
-        //     { threshold: [0.3] },
-        // );
+        const observer = new IntersectionObserver(
+            (entries, observer) => {
+                if (!loadedCheckpoint.value) return;
+                saveLocalStorage(
+                    fileName.value + "Img",
+                    entries[0].target.attributes.getNamedItem("data-index")!.value,
+                );
+            },
+            { threshold: [0.3] },
+        );
 
         watchEffect(
             () => {
                 if (imgsRefs.value.length <= 0) return;
-                // imgsRefs.value.map((el) => observer.observe(el));
+                imgsRefs.value.map((el) => observer.observe(el));
 
                 if (!loadedCheckpoint.value) {
                     const lastChapter = getLocalStorage(fileName.value);
+                    const lastImg = getLocalStorage(fileName.value + "Img");
 
-                    if (!lastChapter) {
-                        chapterIndex.value = 0;
-                    } else if (chapterIndex.value !== parseInt(lastChapter)) {
+                    if (lastChapter && parseInt(lastChapter) !== chapterIndex.value)
                         chapterIndex.value = parseInt(lastChapter);
-                    }
 
-                    loadedCheckpoint.value = true;
+                    if (!lastImg) return (loadedCheckpoint.value = true);
+
+                    const timeout = setTimeout(() => {
+                        window.scrollTo(0, imgsRefs.value[parseInt(lastImg)].offsetTop);
+                        loadedCheckpoint.value = true;
+                        clearTimeout(timeout);
+                    }, 5);
                 }
             },
             {
