@@ -26,7 +26,7 @@
 import ReloadPrompt from "./components/ReloadPrompt.vue";
 import { getLocalStorage, saveLocalStorage } from "./useLocalStorage";
 
-import { ZipReader, BlobReader, Entry, BlobWriter } from "@zip.js/zip.js";
+import { Entry, BlobWriter } from "@zip.js/zip.js";
 import { computed, defineComponent, ref, watch, watchEffect } from "vue";
 import { decompressAndSort } from "./useDecompress";
 
@@ -109,16 +109,17 @@ export default defineComponent({
                     const lastChapter = getLocalStorage(fileName.value);
                     const lastImg = getLocalStorage(fileName.value + "Img");
 
-                    if (lastChapter && parseInt(lastChapter) !== chapterIndex.value)
+                    if (lastChapter && parseInt(lastChapter) !== chapterIndex.value) {
                         chapterIndex.value = parseInt(lastChapter);
+                    }
 
-                    if (!lastImg) return (loadedCheckpoint.value = true);
+                    if (!lastImg) loadedCheckpoint.value = true;
 
                     const timeout = setTimeout(() => {
-                        window.scrollTo(0, imgsRefs.value[parseInt(lastImg)].offsetTop);
+                        window.scrollTo(0, imgsRefs.value[parseInt(lastImg!)].offsetTop);
                         loadedCheckpoint.value = true;
                         clearTimeout(timeout);
-                    }, 5);
+                    }, 50);
                 }
             },
             {
