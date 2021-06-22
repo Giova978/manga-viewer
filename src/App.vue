@@ -13,8 +13,8 @@
             </section>
 
             <section class="controls">
-                <button><span class="fas fa-arrow-left"></span></button>
-                <button><span class="fas fa-arrow-right"></span></button>
+                <button @click="previousChapter"><span class="fas fa-arrow-left"></span></button>
+                <button @click="nextChapter"><span class="fas fa-arrow-right"></span></button>
             </section>
         </header>
 
@@ -35,8 +35,8 @@
         </main>
         <footer>
             <section class="controls">
-                <button><span class="fas fa-arrow-left"></span></button>
-                <button><span class="fas fa-arrow-right"></span></button>
+                <button @click="previousChapter"><span class="fas fa-arrow-left"></span></button>
+                <button @click="nextChapter"><span class="fas fa-arrow-right"></span></button>
             </section>
         </footer>
     </div>
@@ -150,6 +150,16 @@ export default defineComponent({
             },
         );
 
+        const nextChapter = () => {
+            if (chapterIndex.value + 1 >= manga.value.length) return;
+            chapterIndex.value++;
+        };
+
+        const previousChapter = () => {
+            if (chapterIndex.value - 1 < 0) return;
+            chapterIndex.value--;
+        };
+
         return {
             manga,
             chapterIndex,
@@ -164,6 +174,8 @@ export default defineComponent({
             decompress,
             createUrl,
             scrollDown,
+            nextChapter,
+            previousChapter,
         };
     },
 });
