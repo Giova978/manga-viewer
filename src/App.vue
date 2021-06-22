@@ -147,7 +147,12 @@ export default defineComponent({
                     if (!lastImg) loadedCheckpoint.value = true;
 
                     const timeout = setTimeout(() => {
-                        window.scrollTo(0, imgsRefs.value[parseInt(lastImg!)].offsetTop);
+                        window.scrollTo({
+                            left: 0,
+                            top: imgsRefs.value[parseInt(lastImg!)].offsetTop,
+                            behavior: "smooth"
+                        });
+
                         currentImg.value = lastImg!;
                         loadedCheckpoint.value = true;
                         clearTimeout(timeout);
@@ -172,7 +177,8 @@ export default defineComponent({
         const scrollTop = () => {
             window.scrollTo({ 
                 left: 0,
-                
+                top: 0,
+                behavior: "smooth"
             })
         }
 
