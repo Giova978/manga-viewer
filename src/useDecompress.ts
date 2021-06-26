@@ -46,7 +46,5 @@ export async function decompressAndSort(file: any): Promise<[string, Entry[]][] 
             return <[string, Entry[]]>[title, sorted];
         });
 
-    console.log(chapters);
-
     return chapters;
 }
