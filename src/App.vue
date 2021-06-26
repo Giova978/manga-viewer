@@ -6,8 +6,8 @@
     <div class="container">
         <header>
             <section class="inputs">
-                <input type="file" accept=".zip" ref="fileRef" />
-                <button @click="decompress" class="decompress">View</button>
+                <input type="file" accept=".zip" ref="fileRef" @change="decompress" />
+                <!-- <button @click="decompress" class="decompress">View</button> -->
                 <select name="chapter" id="chapter" v-model="chapterIndex">
                     <option v-for="(chapter, index) in chapters" :value="index" :key="index">{{ chapter }}</option>
                 </select>
