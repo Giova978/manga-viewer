@@ -23,7 +23,7 @@ function chaptersObj(entries: any): [string, Entry[]][] {
     );
 }
 
-export async function decompressAndSort(file: any): Promise<[string, Entry[]][] | undefined> {
+export async function decompressAndSort(file: any) {
     const entries = await getEntries(file);
 
     if (!entries) return;
