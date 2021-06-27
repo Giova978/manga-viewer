@@ -1,4 +1,4 @@
-import { ZipReader, BlobReader, Entry } from "@zip.js/zip.js";
+import { ZipReader, BlobReader, Entry, BlobWriter } from "@zip.js/zip.js";
 
 interface Chapters {
     [key: string]: Entry[];
@@ -47,4 +47,8 @@ export async function decompressAndSort(file: any): Promise<[string, Entry[]][] 
         });
 
     return chapters;
+}
+
+export async function createUrl(entry: Entry) {
+    return URL.createObjectURL(await entry.getData!(new BlobWriter()));
 }

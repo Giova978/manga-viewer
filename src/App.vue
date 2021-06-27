@@ -56,9 +56,9 @@
 import ReloadPrompt from "./components/ReloadPrompt.vue";
 import { getLocalStorage, saveLocalStorage } from "./useLocalStorage";
 
-import { Entry, BlobWriter } from "@zip.js/zip.js";
+import { Entry } from "@zip.js/zip.js";
 import { computed, defineComponent, ref, watch, watchEffect } from "vue";
-import { decompressAndSort } from "./useDecompress";
+import { decompressAndSort, createUrl } from "./useDecompress";
 
 export default defineComponent({
     name: "App",
@@ -74,10 +74,6 @@ export default defineComponent({
         const fileName = ref("");
         const loadedCheckpoint = ref(false);
         const currentImg = ref("0");
-
-        const createUrl = async (entry: Entry) => {
-            return URL.createObjectURL(await entry.getData!(new BlobWriter()));
-        };
 
         const decompress = async () => {
             const file = fileRef.value.files[0];
