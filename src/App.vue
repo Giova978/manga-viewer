@@ -139,7 +139,7 @@ export default defineComponent({
                     entries[0].target.attributes.getNamedItem("data-index")!.value,
                 );
             },
-            { threshold: [0.4] },
+            { threshold: 0.4 },
         );
 
         watchEffect(
