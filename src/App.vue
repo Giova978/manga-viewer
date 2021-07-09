@@ -7,7 +7,6 @@
         <header>
             <section class="inputs">
                 <input type="file" accept=".zip" ref="fileRef" @change="decompress" />
-                <!-- <button @click="decompress" class="decompress">View</button> -->
                 <select name="chapter" id="chapter" v-model="chapterIndex">
                     <option v-for="(chapter, index) in chapters" :value="index" :key="index">{{ chapter }}</option>
                 </select>
@@ -57,7 +56,7 @@ import ReloadPrompt from "./components/ReloadPrompt.vue";
 import { getLocalStorage, saveLocalStorage } from "./useLocalStorage";
 
 import { Entry } from "@zip.js/zip.js";
-import { computed, defineComponent, ref, watch, watchEffect } from "vue";
+import { computed, defineComponent, onMounted, ref, watch, watchEffect } from "vue";
 import { decompressAndSort, createUrl } from "./useDecompress";
 
 export default defineComponent({
@@ -74,6 +73,8 @@ export default defineComponent({
         const fileName = ref("");
         const loadedCheckpoint = ref(false);
         const currentImg = ref("0");
+        const scrollingUp = ref(false);
+        let lastYOffset = 0;
 
         const decompress = async () => {
             const file = fileRef.value.files[0];
@@ -100,6 +101,7 @@ export default defineComponent({
 
                 currentImg.value = lastImg!;
                 loadedCheckpoint.value = true;
+                lastYOffset = window.pageYOffset || document.documentElement.scrollTop;
                 clearTimeout(timeout);
             }, 50);
         };
@@ -132,7 +134,6 @@ export default defineComponent({
         const observer = new IntersectionObserver(
             (entries, observer) => {
                 if (!loadedCheckpoint.value) return;
-                console.log(entries);
                 currentImg.value = entries[0].target.attributes.getNamedItem("data-index")!.value;
                 saveLocalStorage(
                     fileName.value + "Img",
@@ -170,6 +171,17 @@ export default defineComponent({
             });
         };
 
+        const scroll = () => {
+            const actualScroll = window.pageYOffset || document.documentElement.scrollTop;
+
+            scrollingUp.value = actualScroll < lastYOffset;
+            lastYOffset = actualScroll <= 0 ? 0 : actualScroll;
+        };
+
+        onMounted(() => {
+            window.addEventListener("scroll", scroll, false);
+        });
+
         return {
             manga,
             chapterIndex,
@@ -180,6 +192,7 @@ export default defineComponent({
             loadedCheckpoint,
             currentImg,
             fileName,
+            scrollingUp,
 
             decompress,
             createUrl,
