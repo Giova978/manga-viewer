@@ -35,6 +35,7 @@
                     }
                 "
                 :data-index="index"
+                loading="lazy"
             />
         </main>
         <footer>
