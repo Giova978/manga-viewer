@@ -115,7 +115,7 @@ export default defineComponent({
             return Promise.all(arr);
         };
 
-        const scrollDown = (event: any) => {
+        const scrollDown = () => {
             window.scrollTo({
                 left: 0,
                 top: window.innerHeight + window.pageYOffset - window.innerHeight * 0.4,
@@ -129,6 +129,7 @@ export default defineComponent({
             if (!loadedCheckpoint.value) return;
             saveLocalStorage(fileName.value, newVal.toString());
             saveLocalStorage(fileName.value + "Img", "0");
+            scrollTop();
             imgs.value = (await getImgs(newVal))!;
         });
 
@@ -179,8 +180,23 @@ export default defineComponent({
             lastYOffset = actualScroll <= 0 ? 0 : actualScroll;
         };
 
+        const handleKeydown = (event: any) => {
+            switch (event.keyCode) {
+                case 37:
+                    chapterIndex.value--;
+                    break;
+                case 39:
+                    chapterIndex.value++;
+                    break;
+                case 40:
+                    scrollDown();
+                    break;
+            }
+        };
+
         onMounted(() => {
             window.addEventListener("scroll", scroll, false);
+            window.addEventListener("keydown", handleKeydown, false);
         });
 
         return {
