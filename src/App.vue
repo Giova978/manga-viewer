@@ -76,6 +76,11 @@ export default defineComponent({
         const currentImg = ref("0");
         const scrollingUp = ref(false);
         let lastYOffset = 0;
+        let threshold = 0.4;
+
+        if (window.innerWidth < 550) {
+            threshold = 0.8;
+        }
 
         const decompress = async () => {
             const file = fileRef.value.files[0];
@@ -136,13 +141,14 @@ export default defineComponent({
         const observer = new IntersectionObserver(
             (entries, observer) => {
                 if (!loadedCheckpoint.value) return;
+                console.log(observer.thresholds);
                 currentImg.value = entries[0].target.attributes.getNamedItem("data-index")!.value;
                 saveLocalStorage(
                     fileName.value + "Img",
                     entries[0].target.attributes.getNamedItem("data-index")!.value,
                 );
             },
-            { threshold: 0.4 },
+            { threshold },
         );
 
         watchEffect(
@@ -183,12 +189,13 @@ export default defineComponent({
         const handleKeydown = (event: any) => {
             switch (event.keyCode) {
                 case 37:
-                    chapterIndex.value--;
+                    previousChapter();
                     break;
                 case 39:
-                    chapterIndex.value++;
+                    nextChapter();
                     break;
                 case 40:
+                    event.preventDefault();
                     scrollDown();
                     break;
             }
